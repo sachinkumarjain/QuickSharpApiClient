@@ -1,8 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace QuickSharpApiClient
 {
@@ -10,7 +6,9 @@ namespace QuickSharpApiClient
     {
         static void Main(string[] args)
         {
-          var client = new ApiClient("https://api.github.com/users/sachinkumarjain", MethodType.Get);
+            var uri = new Uri("https://api.github.com/users/sachinkumarjain");
+
+            var client = new ApiClient(uri.OriginalString, MethodType.Get);
 
             //client.UseDefaultCredentials = true;
             //client.UseCredentials = Credentials.Default;
@@ -31,8 +29,14 @@ namespace QuickSharpApiClient
             //var response = client.SendAsync<string, ResposeMessage>("");
 
             //get object response
+
+            //var filename = FileHelper.CreateTempFile(uri, MethodType.Get);
+
+
+
             try
             {
+                client.IsVirualApiEnable = true;
                 var response = client.SendAsync();
                 Console.WriteLine(response.Result);
             }
@@ -46,4 +50,5 @@ namespace QuickSharpApiClient
             }
             Console.ReadLine();
         }
-  }
+    }
+}

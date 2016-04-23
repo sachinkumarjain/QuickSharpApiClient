@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
+using System.Diagnostics;
 using System.Net.Configuration;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -62,6 +61,7 @@ namespace QuickSharpApiClient
                 return contentType;
             }
         }
+        public bool IsVirualApiEnable { get; set; }
         public void AddHeader(string key, string value)
         {
             _headers.Add(key, value);
@@ -81,13 +81,39 @@ namespace QuickSharpApiClient
             try
             {
                 var uri = new Uri(ApiUrl);
+                Task<string> resultAsync;
+
+                string filename = null;
+                if (IsVirualApiEnable)
+                {
+                    //Create and get file name 
+                    filename = FileHelper.CreateTempFile(uri, MethodType.Get);
+                    Debug.Print("fake file path: " + filename);
+
+                    var fakeResponse = FileHelper.ReadResponse(filename, contentRequest);
+
+                    if (!string.IsNullOrWhiteSpace(fakeResponse.Result))
+                    {
+                        Debug.Print("fakeResponse: " + fakeResponse.Result);
+                        return fakeResponse;
+                    }
+                }
+
                 var httpContentRequest = new StringContent(contentRequest, System.Text.Encoding.UTF8, ContentType);
 
                 AllowUnsafeHeaderParsing(true);
                 var response = SendAsync(uri, httpContentRequest, Method);
                 AllowUnsafeHeaderParsing(false);
 
-                var resultAsync = response.Result.Content.ReadAsStringAsync();
+                resultAsync = response.Result.Content.ReadAsStringAsync();
+
+                //save fake response
+                if (IsVirualApiEnable && !string.IsNullOrWhiteSpace(filename))
+                {
+                    FileHelper.SaveResponse(filename, string.Empty, resultAsync);
+                    Debug.Print("Save api response: " + resultAsync.Result);
+                }
+
                 return resultAsync;
             }
             catch (HttpRequestException hre)
@@ -116,7 +142,7 @@ namespace QuickSharpApiClient
 
         private async Task<HttpResponseMessage> SendAsync(Uri uri, HttpContent content, MethodType method)
         {
-            if(UseDefaultCredentials)
+            if (UseDefaultCredentials)
             {
                 UseCredentials = Credentials.Default;
             }
@@ -125,7 +151,7 @@ namespace QuickSharpApiClient
                 UseDefaultCredentials = UseCredentials == Credentials.Default
             };
             var client = new HttpClient(handler, true) { MaxResponseContentBufferSize = 256000 };
-            
+
             if (UseCredentials == Credentials.Basic)
             {
                 if ((string.IsNullOrWhiteSpace(UserName) || string.IsNullOrWhiteSpace(Password)))
@@ -143,7 +169,7 @@ namespace QuickSharpApiClient
                 }
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
             }
-            
+
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(ContentType));
 
             foreach (var header in _headers)
@@ -152,6 +178,7 @@ namespace QuickSharpApiClient
             }
 
             Task<HttpResponseMessage> message = null;
+
             switch (Method)
             {
                 case MethodType.Get:
@@ -167,6 +194,7 @@ namespace QuickSharpApiClient
                     message = client.DeleteAsync(uri);
                     break;
             }
+
             return await message;
         }
 
