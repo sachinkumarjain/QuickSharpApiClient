@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace QuickSharpApiClient
 {
-    public class FileHelper
+    public static class FileHelper
     {
         public static string CreateTempFile(Uri uri, MethodType method)
         {
@@ -42,54 +42,63 @@ namespace QuickSharpApiClient
 
         }
 
-        public static async Task<string> ReadResponse(string filename)
-        {
-            using (var r = new StreamReader(filename))
-            {
-                var task = r.ReadToEndAsync();
-                return await task;
-            }
-        }
-
         public static async Task<string> ReadResponse(string filename, string request)
         {
+            string nextline;
+            string result = string.Empty;
             using (var r = new StreamReader(filename))
             {
-                var task = r.ReadToEndAsync();
-                return await task;
+                while((nextline = await r.ReadLineAsync()) != null)
+                {
+                    var respo = ReadReponseFromRequest(request, nextline);
+                    if (!string.IsNullOrWhiteSpace(respo)) { result = respo; break; }
+                }
+                return result.Decode();
             }
         }
 
-        public static async void SaveResponse(string filename, Task<string> response)
+        private static string ReadReponseFromRequest(string request, string nextline) 
         {
-            using (var w = File.AppendText(filename))
-            {
-                w.Write(await response);
-            }
+            if (string.IsNullOrWhiteSpace(nextline)) { return string.Empty; }
+            var fake = nextline.FromJson<FakeApiData>();
+            return request.Equals(fake.Request.Decode(), StringComparison.OrdinalIgnoreCase) ? fake.Response : string.Empty;
         }
 
         public static async void SaveResponse(string filename, string request, Task<string> response)
         {
             using (var w = File.AppendText(filename))
             {
-                w.Write(PrepareFakeResponseToSave(request, await response));
+                await w.WriteLineAsync(PrepareFakeResponseToSave(request, await response));
             }
         }
 
         private static string PrepareFakeResponseToSave(string request, string response)
         {
-            return string.Concat("{\"request\": \"", request, "\", \"response\": \"", response, "\"}");
+            var respo = string.Concat("{\"request\": \"", request.Encode(), "\", \"response\": \"", response.Encode(), "\"}");
+            return respo;
         }
 
-        private static string PrepareResponseToRead(string request, string fakeResponse)
-        {
-            var fake = ApiClient.ConvertFromJson<FakeApiData>(fakeResponse);
-            return request.Equals(fake.Request) ? fake.Response : string.Empty;
-        }
+        //private static string PrepareResponseToRead(string request, string fakeResponse)
+        //{
+        //    var fake = ApiClient.ConvertFromJson<FakeApiData>(fakeResponse);
+        //    return request.Equals(fake.Request) ? fake.Response : string.Empty;
+        //}
 
         private static string ReplaceSpecialChars(string input)
         {
             return input.Replace("/", "_").Replace(":", "__");
+        }
+
+        public static string Encode(this string plainText)
+        {
+            var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
+            return System.Convert.ToBase64String(plainTextBytes);
+        }
+
+        public static string Decode(this string base64EncodedData)
+        {
+            var base64EncodedBytes = System.Convert.FromBase64String(base64EncodedData);
+            return System.Text.Encoding.UTF8.GetString(base64EncodedBytes);
         }
     }
 

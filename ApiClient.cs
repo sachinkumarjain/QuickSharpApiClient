@@ -1,39 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net.Configuration;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using System.Web.Script.Serialization;
 
 namespace QuickSharpApiClient
 {
-    public enum MethodType
-    {
-        Get,
-        Post,
-        Put,
-        Delete
-    }
-
-    public enum HttpContentType
-    {
-        Json,
-        Xml,
-        Text
-    }
-
-    public enum Credentials
-    {
-        None = 0,
-        Default = 1,
-        Basic = 2,
-        OAuth = 3
-    }
-
     public class ApiClient
     {
         private IDictionary<string, string> _headers = new Dictionary<string, string>();
@@ -101,16 +75,16 @@ namespace QuickSharpApiClient
 
                 var httpContentRequest = new StringContent(contentRequest, System.Text.Encoding.UTF8, ContentType);
 
-                AllowUnsafeHeaderParsing(true);
+                ApiClientHelper.AllowUnsafeHeaderParsing(true);
                 var response = SendAsync(uri, httpContentRequest, Method);
-                AllowUnsafeHeaderParsing(false);
+                ApiClientHelper.AllowUnsafeHeaderParsing(false);
 
                 resultAsync = response.Result.Content.ReadAsStringAsync();
 
                 //save fake response
                 if (IsVirualApiEnable && !string.IsNullOrWhiteSpace(filename))
                 {
-                    FileHelper.SaveResponse(filename, string.Empty, resultAsync);
+                    FileHelper.SaveResponse(filename, contentRequest, resultAsync);
                     Debug.Print("Save api response: " + resultAsync.Result);
                 }
 
@@ -129,15 +103,15 @@ namespace QuickSharpApiClient
 
         public TResponse SendAsync<TRequest, TResponse>(TRequest request)
         {
-            var contentRequest = ConvertToJson(request);
+            var contentRequest = request.ToJson();
             var response = SendAsync(contentRequest);
-            return ConvertFromJson<TResponse>(response.Result);
+            return response.Result.FromJson<TResponse>();
         }
 
         public TResponse SendAsync<TResponse>()
         {
             var response = SendAsync();
-            return ConvertFromJson<TResponse>(response.Result);
+            return response.Result.FromJson<TResponse>();
         }
 
         private async Task<HttpResponseMessage> SendAsync(Uri uri, HttpContent content, MethodType method)
@@ -196,51 +170,6 @@ namespace QuickSharpApiClient
             }
 
             return await message;
-        }
-
-        public static string ConvertToJson<TRequest>(TRequest request)
-        {
-            var serializer = new JavaScriptSerializer();
-            var result = serializer.Serialize(request);
-            return result;
-        }
-
-        public static TResponse ConvertFromJson<TResponse>(string request)
-        {
-            var serializer = new JavaScriptSerializer();
-            var result = serializer.Deserialize<TResponse>(request);
-            return result;
-        }
-
-        // Enable/disable useUnsafeHeaderParsing.
-        private static bool AllowUnsafeHeaderParsing(bool enable)
-        {
-            //Get the assembly that contains the internal class
-            var assembly = Assembly.GetAssembly(typeof(SettingsSection));
-            if (assembly != null)
-            {
-                //Use the assembly in order to get the internal type for the internal class
-                Type settingsSectionType = assembly.GetType("System.Net.Configuration.SettingsSectionInternal");
-                if (settingsSectionType != null)
-                {
-                    //Use the internal static property to get an instance of the internal settings class.
-                    //If the static instance isn't created already invoking the property will create it for us.
-                    object anInstance = settingsSectionType.InvokeMember("Section",
-                    BindingFlags.Static | BindingFlags.GetProperty | BindingFlags.NonPublic, null, null, new object[] { });
-                    if (anInstance != null)
-                    {
-                        //Locate the private bool field that tells the framework if unsafe header parsing is allowed
-                        FieldInfo aUseUnsafeHeaderParsing = settingsSectionType.GetField("useUnsafeHeaderParsing", BindingFlags.NonPublic | BindingFlags.Instance);
-                        if (aUseUnsafeHeaderParsing != null)
-                        {
-                            aUseUnsafeHeaderParsing.SetValue(anInstance, enable);
-                            return true;
-                        }
-
-                    }
-                }
-            }
-            return false;
         }
     }
 }
