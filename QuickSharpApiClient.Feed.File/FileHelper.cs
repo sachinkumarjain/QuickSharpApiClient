@@ -1,8 +1,10 @@
-﻿using System;
+﻿using QuickSharpApiClient.Common.Enums;
+using QuickSharpApiClient.Common.Json;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace QuickSharpApiClient
+namespace QuickSharpApiClient.Feed.Files
 {
     public static class FileHelper
     {

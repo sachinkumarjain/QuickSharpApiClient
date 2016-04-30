@@ -1,5 +1,5 @@
 ﻿
-namespace QuickSharpApiClient
+namespace QuickSharpApiClient.Common.Enums
 {
     public enum MethodType
     {

@@ -1,6 +1,6 @@
 ﻿using System.Web.Script.Serialization;
 
-namespace QuickSharpApiClient
+namespace QuickSharpApiClient.Common.Json
 {
     public static class JsonHelper
     {

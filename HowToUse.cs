@@ -1,3 +1,4 @@
+using QuickSharpApiClient.Common.Enums;
 using System;
 
 namespace QuickSharpApiClient

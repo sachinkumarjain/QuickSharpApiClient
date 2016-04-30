@@ -1,4 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using QuickSharpApiClient.Common.Enums;
+using QuickSharpApiClient.Feed.Files;
 using System;
 using System.IO; 
 
