@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Net.Configuration;
+using System.Net.Http;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace QuickSharpApiClient
 {
-    public class ApiClientHelper
+    public static class ApiClientHelper
     {
         // Enable/disable useUnsafeHeaderParsing.
         public static bool AllowUnsafeHeaderParsing(bool enable)
@@ -36,5 +38,18 @@ namespace QuickSharpApiClient
             }
             return false;
         }
+
+        public static Task<HttpResponseMessage> PatchAsync(this HttpClient client, Uri uri, HttpContent content) 
+        { 
+             HttpRequestMessage request = new HttpRequestMessage 
+             { 
+                 Method = new HttpMethod("PATCH"), 
+                 RequestUri = uri, 
+                 Content = content, 
+             }; 
+
+             return client.SendAsync(request); 
+         } 
+
     }
 }

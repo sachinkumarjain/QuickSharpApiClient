@@ -164,6 +164,9 @@ namespace QuickSharpApiClient
                 case MethodType.Put:
                     message = client.PutAsync(uri, content);
                     break;
+                case MethodType.Patch:
+                    message = client.PatchAsync(uri, content);
+                    break;
                 case MethodType.Delete:
                     message = client.DeleteAsync(uri);
                     break;

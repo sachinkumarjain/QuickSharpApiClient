@@ -6,6 +6,7 @@ namespace QuickSharpApiClient
         Get,
         Post,
         Put,
+        Patch,
         Delete
     }
 
