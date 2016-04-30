@@ -59,19 +59,36 @@ namespace QuickSharpApiClient.Feed.Files
             }
         }
 
-        private static string ReadReponseFromRequest(string request, string nextline) 
-        {
-            if (string.IsNullOrWhiteSpace(nextline)) { return string.Empty; }
-            var fake = nextline.FromJson<FakeApiData>();
-            return request.Equals(fake.Request.Decode(), StringComparison.OrdinalIgnoreCase) ? fake.Response : string.Empty;
-        }
-
         public static async void SaveResponse(string filename, string request, Task<string> response)
         {
             using (var w = File.AppendText(filename))
             {
                 await w.WriteLineAsync(PrepareFakeResponseToSave(request, await response));
             }
+        }
+
+        public static async void SaveResponse(string filename, string request, string response)
+        {
+            using (var w = File.AppendText(filename))
+            {
+                await w.WriteLineAsync(PrepareFakeResponseToSave(request, response));
+            }
+        }
+
+        public static void ReplaceResponse(string filename, string request, string response)
+        {
+            var current = ReadResponse(filename, request);
+
+            var oldText = File.ReadAllText(filename);
+            var newText = oldText.Replace(current.Result.Encode(), response.Encode());
+            File.WriteAllText(filename, newText);
+        }
+
+        private static string ReadReponseFromRequest(string request, string nextline) 
+        {
+            if (string.IsNullOrWhiteSpace(nextline)) { return string.Empty; }
+            var fake = nextline.FromJson<FakeApiData>();
+            return request.Equals(fake.Request.Decode(), StringComparison.OrdinalIgnoreCase) ? fake.Response : string.Empty;
         }
 
         private static string PrepareFakeResponseToSave(string request, string response)
@@ -86,7 +103,7 @@ namespace QuickSharpApiClient.Feed.Files
         //    return request.Equals(fake.Request) ? fake.Response : string.Empty;
         //}
 
-        private static string ReplaceSpecialChars(string input)
+        public static string ReplaceSpecialChars(string input)
         {
             return input.Replace("/", "_").Replace(":", "__");
         }
