@@ -28,7 +28,7 @@ namespace QuickSharpApiClient
         public int MaxResponseContentBufferSize { get; set; }
         public string ApiUrl { get; private set; }
         public HttpContentType DefaultContentType { get; set; }
-        public MethodType Method { get; private set; }
+        public MethodType? Method { get; private set; }
         public FileAccess FileAccess { get; set; }
         public string ContentType
         {
@@ -47,12 +47,22 @@ namespace QuickSharpApiClient
 
         public ApiClient(string uri, MethodType method, FileAccess fileAccess = null)
         {
+            Init(new Uri(uri), method, fileAccess);
+        }
+
+        private void Init(Uri uri, MethodType? method, FileAccess fileAccess)
+        {
             MaxResponseContentBufferSize = 256000;
             DefaultContentType = HttpContentType.Json;
             Method = method;
-            ApiUrl = uri;
+            ApiUrl = uri.OriginalString;
             this.AddHeader("User-Agent", "Mozilla /5.0 (Compatible MSIE 9.0;Windows NT 6.1;WOW64; Trident/5.0)");
-            FileAccess = fileAccess ?? new FileAccess() { ApiUri = new Uri(uri), Method = method };
+            FileAccess = fileAccess ?? new FileAccess() { ApiUri = uri, Method = method };
+        }
+
+        public ApiClient(FileAccess fileAccess)
+        {
+            Init(fileAccess.ApiUri, fileAccess.Method, fileAccess);
         }
 
         public Task<string> SendAsync(string contentRequest = "")
@@ -117,7 +127,7 @@ namespace QuickSharpApiClient
             return response.Result.FromJson<TResponse>();
         }
 
-        private async Task<HttpResponseMessage> SendAsync(Uri uri, HttpContent content, MethodType method)
+        private async Task<HttpResponseMessage> SendAsync(Uri uri, HttpContent content, MethodType? method)
         {
             if (UseDefaultCredentials)
             {

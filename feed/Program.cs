@@ -1,4 +1,5 @@
 ﻿
+using QuickSharpApiClient;
 using QuickSharpApiClient.Common.Enums;
 using QuickSharpApiClient.Feed.Files;
 using System;
@@ -61,7 +62,7 @@ namespace feed
 
             if (access.IsDefaultTempPath)
             {
-                Console.WriteLine("Enter base directory to store or use temp (leave empty): ");
+                Console.WriteLine("Enter base directory to store or use temp (leave blank): ");
                 try
                 {
                     access.BaseDirectory = Console.ReadLine();
@@ -73,6 +74,9 @@ namespace feed
                 }
 
             }
+
+            Console.WriteLine("Enter the request (optional): ");
+            request = Console.ReadLine();
 
             Console.WriteLine("Set API Url: " + access.ApiUri);
 
@@ -95,9 +99,28 @@ namespace feed
                 throw;
             }
 
-            if (!HasResponse) { Console.WriteLine("No response found for given api."); Console.ReadKey(); return; }
+            if (!HasResponse)
+            {
+                Console.WriteLine("No response found for given api."); Console.ReadKey();
 
-            Console.WriteLine("Do you want to overite the response? Y|N ");
+                ////////////////////////////////////////////////////////////////////
+                Console.WriteLine("\n\rDo you want to record for this api? (Y | N)");
+
+                if (Console.ReadLine().Equals("y", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine("Enter the request (optional): ");
+                    request = Console.ReadLine();
+                }
+
+                var client = new ApiClient(access) { IsVirualApiEnable = true };
+                var recordResponse = client.SendAsync();
+
+                Console.WriteLine("Response is recorded / saved to use: ");
+                Console.WriteLine(recordResponse.Result);
+            }
+            
+            ////////////////////////////////////////////////////////////////////////
+            Console.WriteLine("Do you want to overite the response? (Y | N) ");
             if (Console.ReadLine().Equals("y", StringComparison.OrdinalIgnoreCase))
             {
                 Console.WriteLine("Enter to replace response: ");
@@ -112,6 +135,24 @@ namespace feed
                     access.Replace(request, response);
                     Console.WriteLine("API Response has been modified.");
                 }
+            }
+
+            ///////////////////////////////////////////////////////////////////////
+            Console.WriteLine("Do you want to integrate with real call? (Y | N) ");
+            if (Console.ReadLine().Equals("y", StringComparison.OrdinalIgnoreCase))
+            {
+                var virtualResponse = access.Read(request);
+
+                var client = new ApiClient(access) { IsVirualApiEnable = false };
+                var reatimeResponse = client.SendAsync();
+
+
+                Console.WriteLine("Recorded Response: " + virtualResponse.Result);
+                Console.WriteLine("Real-time Response: " + reatimeResponse.Result);
+
+                var compare = string.Compare(reatimeResponse.Result, virtualResponse.Result, true);
+
+                Console.WriteLine("Result: " + (compare == 0 ? "Both result are equal" : "Found some differences"));
             }
             
             Console.ReadKey();
