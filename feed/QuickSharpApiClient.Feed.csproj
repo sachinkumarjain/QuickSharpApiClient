@@ -7,8 +7,8 @@
     <ProjectGuid>{18311296-D9DE-4FCC-AD02-3DF96E905A28}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>feed</RootNamespace>
-    <AssemblyName>feed</AssemblyName>
+    <RootNamespace>QuickSharpApiClient.Feed</RootNamespace>
+    <AssemblyName>Feed</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -51,6 +51,10 @@
     <ProjectReference Include="..\QuickSharpApiClient.Common\QuickSharpApiClient.Common.csproj">
       <Project>{8614fda1-53cf-4e42-8e63-75bcc7536c9f}</Project>
       <Name>QuickSharpApiClient.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\QuickSharpApiClient.csproj">
+      <Project>{d8805b55-2771-4787-ba15-b3e663501fb5}</Project>
+      <Name>QuickSharpApiClient</Name>
     </ProjectReference>
     <ProjectReference Include="..\QuickSharpApiClient.Feed.File\QuickSharpApiClient.Feed.Files.csproj">
       <Project>{f7a98ffd-03fa-4741-b28b-af514a6c2cb9}</Project>

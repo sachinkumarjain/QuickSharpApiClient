@@ -29,6 +29,7 @@ namespace QuickSharpApiClient
         public string ApiUrl { get; private set; }
         public HttpContentType DefaultContentType { get; set; }
         public MethodType Method { get; private set; }
+        public FileAccess FileAccess { get; set; }
         public string ContentType
         {
             get
@@ -44,13 +45,14 @@ namespace QuickSharpApiClient
             _headers.Add(key, value);
         }
 
-        public ApiClient(string uri, MethodType method)
+        public ApiClient(string uri, MethodType method, FileAccess fileAccess = null)
         {
             MaxResponseContentBufferSize = 256000;
             DefaultContentType = HttpContentType.Json;
             Method = method;
             ApiUrl = uri;
             this.AddHeader("User-Agent", "Mozilla /5.0 (Compatible MSIE 9.0;Windows NT 6.1;WOW64; Trident/5.0)");
+            FileAccess = fileAccess ?? new FileAccess() { ApiUri = new Uri(uri), Method = method };
         }
 
         public Task<string> SendAsync(string contentRequest = "")
@@ -60,14 +62,12 @@ namespace QuickSharpApiClient
                 var uri = new Uri(ApiUrl);
                 Task<string> resultAsync;
 
-                string filename = null;
                 if (IsVirualApiEnable)
                 {
                     //Create and get file name 
-                    filename = FileHelper.CreateTempFile(uri, MethodType.Get);
-                    Debug.Print("fake file path: " + filename);
+                    Debug.Print("fake file path: " + FileAccess.FileName);
 
-                    var fakeResponse = FileHelper.ReadResponse(filename, contentRequest);
+                    var fakeResponse = FileAccess.Read(contentRequest);
 
                     if (!string.IsNullOrWhiteSpace(fakeResponse.Result))
                     {
@@ -85,9 +85,9 @@ namespace QuickSharpApiClient
                 resultAsync = response.Result.Content.ReadAsStringAsync();
 
                 //save fake response
-                if (IsVirualApiEnable && !string.IsNullOrWhiteSpace(filename))
+                if (IsVirualApiEnable && !string.IsNullOrWhiteSpace(FileAccess.FileName))
                 {
-                    FileHelper.SaveResponse(filename, contentRequest, resultAsync);
+                    FileAccess.Save(contentRequest, resultAsync.Result);
                     Debug.Print("Save api response: " + resultAsync.Result);
                 }
 

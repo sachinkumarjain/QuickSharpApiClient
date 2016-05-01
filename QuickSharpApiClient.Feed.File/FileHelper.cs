@@ -1,5 +1,4 @@
-﻿using QuickSharpApiClient.Common.Enums;
-using QuickSharpApiClient.Common.Json;
+﻿using QuickSharpApiClient.Common.Json;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -8,30 +7,26 @@ namespace QuickSharpApiClient.Feed.Files
 {
     public static class FileHelper
     {
-        public static string CreateTempFile(Uri uri, MethodType method)
+        public static void CreateFile(string path, string filename)
         {
-            var tempPath = Path.Combine(Path.GetTempPath(), ReplaceSpecialChars(uri.Host));
-
-            if (!Directory.Exists(tempPath))
+            if (!Directory.Exists(path))
             {
                 try
                 {
-                    var dir = new DirectoryInfo(tempPath);
+                    var dir = new DirectoryInfo(path);
                     dir.Create();
                 }
                 catch (Exception ex)
                 {
-                    throw new ApplicationException("Unable to temp file path to storage for temp api", ex);
+                    throw new ApplicationException("Unable to create file path to storage", ex);
                 }
             }
 
-            var fileName = Path.Combine(tempPath, string.Concat(ReplaceSpecialChars(uri.AbsolutePath), "_", method.ToString(), ".temp.apix"));
-
-            if (!File.Exists(fileName))
+            if (!File.Exists(filename))
             {
                 try
                 {
-                    System.IO.FileStream s = System.IO.File.Create(fileName);
+                    System.IO.FileStream s = System.IO.File.Create(filename);
                     s.Close();
                 }
                 catch (Exception ex)
@@ -39,8 +34,6 @@ namespace QuickSharpApiClient.Feed.Files
                     throw new ApplicationException("Unable to create file to storage for temp api", ex);
                 }
             }
-
-            return fileName;
 
         }
 
@@ -58,15 +51,7 @@ namespace QuickSharpApiClient.Feed.Files
                 return result.Decode();
             }
         }
-
-        public static async void SaveResponse(string filename, string request, Task<string> response)
-        {
-            using (var w = File.AppendText(filename))
-            {
-                await w.WriteLineAsync(PrepareFakeResponseToSave(request, await response));
-            }
-        }
-
+        
         public static async void SaveResponse(string filename, string request, string response)
         {
             using (var w = File.AppendText(filename))
@@ -96,12 +81,6 @@ namespace QuickSharpApiClient.Feed.Files
             var respo = string.Concat("{\"request\": \"", request.Encode(), "\", \"response\": \"", response.Encode(), "\"}");
             return respo;
         }
-
-        //private static string PrepareResponseToRead(string request, string fakeResponse)
-        //{
-        //    var fake = ApiClient.ConvertFromJson<FakeApiData>(fakeResponse);
-        //    return request.Equals(fake.Request) ? fake.Response : string.Empty;
-        //}
 
         public static string ReplaceSpecialChars(string input)
         {

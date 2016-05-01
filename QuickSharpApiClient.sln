@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickSharpApiClient", "Quic
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickSharpApiClient.Tests", "QuickSharpApiClient.Tests\QuickSharpApiClient.Tests.csproj", "{E25B9D26-ECC0-4348-A8C2-B2460F10B219}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "feed", "feed\feed.csproj", "{18311296-D9DE-4FCC-AD02-3DF96E905A28}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickSharpApiClient.Feed", "feed\QuickSharpApiClient.Feed.csproj", "{18311296-D9DE-4FCC-AD02-3DF96E905A28}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickSharpApiClient.Feed.Files", "QuickSharpApiClient.Feed.File\QuickSharpApiClient.Feed.Files.csproj", "{F7A98FFD-03FA-4741-B28B-AF514A6C2CB9}"
 EndProject

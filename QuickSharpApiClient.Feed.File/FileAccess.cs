@@ -9,6 +9,8 @@ namespace QuickSharpApiClient.Feed.Files
     {
         Task<string> Read(string request = null);
         void Save(string request, string response);
+        void Replace(string request, string response);
+        void Create();
     }
 
     public class FileAccess : IDataAccess
@@ -18,7 +20,7 @@ namespace QuickSharpApiClient.Feed.Files
         {
             get
             {
-                if(string.IsNullOrWhiteSpace(_baseDirectory))
+                if (string.IsNullOrWhiteSpace(_baseDirectory))
                 {
                     _baseDirectory = Path.GetTempPath();
                 }
@@ -26,41 +28,53 @@ namespace QuickSharpApiClient.Feed.Files
             }
             set { _baseDirectory = value; }
         }
+
+        public bool IsDefaultTempPath { get { return BaseDirectory == Path.GetTempPath(); } }
+
         public string FilePath { get { return Path.Combine(BaseDirectory, FileHelper.ReplaceSpecialChars(ApiUri.Host)); } }
-        public string FileName { get { return Path.Combine(FilePath, string.Concat(FileHelper.ReplaceSpecialChars(ApiUri.AbsolutePath), "_", Method.ToString(), ".temp.apix")); } }
+        public string FileName
+        {
+            get
+            {
+                return Path.Combine(FilePath, string.Concat(FileHelper.ReplaceSpecialChars(ApiUri.AbsolutePath), "_", Method.ToString(), ".temp.apix")).ToLowerInvariant();
+            }
+        }
         public Uri ApiUri { get; set; }
-        public MethodType Method { get; set; }
+        public MethodType? Method { get; set; }
 
         public FileAccess()
         {
         }
 
-        private void CreateDirectory()
+        public void Create()
         {
-            if (!Directory.Exists(BaseDirectory))
-            {
-                try
-                {
-                    var dir = new DirectoryInfo(BaseDirectory);
-                    dir.Create();
-                }
-                catch (Exception ex)
-                {
-                    throw new ApplicationException("Unable to create file path to storage", ex);
-                }
-            }
+            FileHelper.CreateFile(FilePath, FileName);
+
+            System.Diagnostics.Debug.Print("File Created at " + FileName);
         }
 
         public async Task<string> Read(string request = null)
         {
-            return await FileHelper.ReadResponse(this.FileName, request);
+            try
+            {
+                return await FileHelper.ReadResponse(this.FileName, request);
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
         }
 
         public void Save(string request, string response)
         {
-            CreateDirectory();
+            Create();
 
-           FileHelper.SaveResponse(this.FileName, request, response);
+            FileHelper.SaveResponse(this.FileName, request, response);
+        }
+
+        public void Replace(string request, string response)
+        {
+            FileHelper.ReplaceResponse(this.FileName, request, response);
         }
     }
 }
