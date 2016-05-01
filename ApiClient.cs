@@ -40,78 +40,69 @@ namespace QuickSharpApiClient
             }
         }
         public bool IsVirualApiEnable { get; set; }
+
+        public bool ForceToRecord { get; set; }
+
         public void AddHeader(string key, string value)
         {
             _headers.Add(key, value);
         }
 
-        public ApiClient(string uri, MethodType method, FileAccess fileAccess = null)
+        public ApiClient(string uri, MethodType method)
         {
-            Init(new Uri(uri), method, fileAccess);
-        }
-
-        private void Init(Uri uri, MethodType? method, FileAccess fileAccess)
-        {
-            MaxResponseContentBufferSize = 256000;
-            DefaultContentType = HttpContentType.Json;
-            Method = method;
-            ApiUrl = uri.OriginalString;
-            this.AddHeader("User-Agent", "Mozilla /5.0 (Compatible MSIE 9.0;Windows NT 6.1;WOW64; Trident/5.0)");
-            FileAccess = fileAccess ?? new FileAccess() { ApiUri = uri, Method = method };
+            Init(new FileAccess() { ApiUri = new Uri(uri), Method = method });
         }
 
         public ApiClient(FileAccess fileAccess)
         {
-            Init(fileAccess.ApiUri, fileAccess.Method, fileAccess);
+            Init(fileAccess);
         }
 
-        public Task<string> SendAsync(string contentRequest = "")
+        private void Init(FileAccess fa)
         {
-            try
-            {
-                var uri = new Uri(ApiUrl);
-                Task<string> resultAsync;
+            MaxResponseContentBufferSize = 256000;
+            DefaultContentType = HttpContentType.Json;
+            Method = fa.Method;
+            ApiUrl = fa.ApiUri.OriginalString;
+            this.AddHeader("User-Agent", "Mozilla /5.0 (Compatible MSIE 9.0;Windows NT 6.1;WOW64; Trident/5.0)");
+            FileAccess = fa;
+        }
 
-                if (IsVirualApiEnable)
+        public async Task<string> SendAsync(string contentRequest = "")
+        {
+            var uri = new Uri(ApiUrl);
+            Task<string> resultAsync;
+
+            if (IsVirualApiEnable && !ForceToRecord)
+            {
+                //Create and get file name 
+                Debug.Print("fake file path: " + FileAccess.FileName);
+
+                var fakeResponse = await FileAccess.Read(contentRequest);
+
+                if (!string.IsNullOrWhiteSpace(fakeResponse))
                 {
-                    //Create and get file name 
-                    Debug.Print("fake file path: " + FileAccess.FileName);
-
-                    var fakeResponse = FileAccess.Read(contentRequest);
-
-                    if (!string.IsNullOrWhiteSpace(fakeResponse.Result))
-                    {
-                        Debug.Print("fakeResponse: " + fakeResponse.Result);
-                        return fakeResponse;
-                    }
+                    Debug.Print("fakeResponse: " + fakeResponse);
+                    return fakeResponse;
                 }
-
-                var httpContentRequest = new StringContent(contentRequest, System.Text.Encoding.UTF8, ContentType);
-
-                ApiClientHelper.AllowUnsafeHeaderParsing(true);
-                var response = SendAsync(uri, httpContentRequest, Method);
-                ApiClientHelper.AllowUnsafeHeaderParsing(false);
-
-                resultAsync = response.Result.Content.ReadAsStringAsync();
-
-                //save fake response
-                if (IsVirualApiEnable && !string.IsNullOrWhiteSpace(FileAccess.FileName))
-                {
-                    FileAccess.Save(contentRequest, resultAsync.Result);
-                    Debug.Print("Save api response: " + resultAsync.Result);
-                }
-
-                return resultAsync;
             }
-            catch (HttpRequestException hre)
+
+            var httpContentRequest = new StringContent(contentRequest, System.Text.Encoding.UTF8, ContentType);
+
+            ApiClientHelper.AllowUnsafeHeaderParsing(true);
+            var response = await SendAsync(uri, httpContentRequest, Method);
+            ApiClientHelper.AllowUnsafeHeaderParsing(false);
+
+            resultAsync = response.Content.ReadAsStringAsync();
+
+            //save fake response
+            if (IsVirualApiEnable && !string.IsNullOrWhiteSpace(FileAccess.FileName))
             {
-                throw hre;
+                FileAccess.Save(contentRequest, resultAsync.Result);
+                Debug.Print("Save api response: " + resultAsync.Result);
             }
-            catch (Exception ex)
-            {
-                // For debugging
-                throw ex;
-            }
+
+            return await resultAsync;
         }
 
         public TResponse SendAsync<TRequest, TResponse>(TRequest request)

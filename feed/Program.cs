@@ -12,7 +12,7 @@ namespace feed
         {
             var access = new FileAccess();
             string request = string.Empty;
-            
+
             if (args.Length > 0)
             {
                 access.ApiUri = new Uri(args[0]);
@@ -42,7 +42,7 @@ namespace feed
                     Console.WriteLine("Invalid format of api url.");
                     access.ApiUri = null;
                 }
-                
+
             }
 
             while (access.Method == null)
@@ -50,7 +50,7 @@ namespace feed
                 Console.WriteLine("Enter API Method (Get | Post | Put | Patch | Delete): ");
                 try
                 {
-                    access.Method = (MethodType) Enum.Parse(typeof(MethodType), Console.ReadLine(), true);
+                    access.Method = (MethodType)Enum.Parse(typeof(MethodType), Console.ReadLine(), true);
                 }
                 catch (Exception)
                 {
@@ -91,7 +91,7 @@ namespace feed
             {
                 var resp = access.Read(request);
                 Console.WriteLine("Get API Response: " + resp.Result);
-                HasResponse = !string.IsNullOrWhiteSpace(resp.Result); 
+                HasResponse = !string.IsNullOrWhiteSpace(resp.Result);
             }
             catch (Exception)
             {
@@ -101,26 +101,28 @@ namespace feed
 
             if (!HasResponse)
             {
-                Console.WriteLine("No response found for given api."); Console.ReadKey();
+                Console.WriteLine("\n\rNo response found for given api.");
+            }
 
-                ////////////////////////////////////////////////////////////////////
-                Console.WriteLine("\n\rDo you want to record for this api? (Y | N)");
+            ///////////////////////////////////////////////////////////////////
+            Console.WriteLine("\n\rDo you want to record for this api? (Y | N)");
 
-                if (Console.ReadLine().Equals("y", StringComparison.OrdinalIgnoreCase))
-                {
-                    Console.WriteLine("Enter the request (optional): ");
-                    request = Console.ReadLine();
-                }
+            if (Console.ReadLine().Equals("y", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine("Enter the request (optional): ");
+                request = Console.ReadLine();
 
-                var client = new ApiClient(access) { IsVirualApiEnable = true };
-                var recordResponse = client.SendAsync();
+                var vClient = new ApiClient(access) { IsVirualApiEnable = true, ForceToRecord = true };
+                var recordResponse = vClient.SendAsync();
 
-                Console.WriteLine("Response is recorded / saved to use: ");
+                access.Replace(request, recordResponse.Result);
+
+                Console.WriteLine("\n\rResponse is recorded / saved to use: ");
                 Console.WriteLine(recordResponse.Result);
             }
-            
+
             ////////////////////////////////////////////////////////////////////////
-            Console.WriteLine("Do you want to overite the response? (Y | N) ");
+            Console.WriteLine("\n\rDo you want to overite the response? (Y | N) ");
             if (Console.ReadLine().Equals("y", StringComparison.OrdinalIgnoreCase))
             {
                 Console.WriteLine("Enter to replace response: ");
@@ -138,7 +140,7 @@ namespace feed
             }
 
             ///////////////////////////////////////////////////////////////////////
-            Console.WriteLine("Do you want to integrate with real call? (Y | N) ");
+            Console.WriteLine("\n\rDo you want to integrate with real call? (Y | N) ");
             if (Console.ReadLine().Equals("y", StringComparison.OrdinalIgnoreCase))
             {
                 var virtualResponse = access.Read(request);
@@ -147,14 +149,16 @@ namespace feed
                 var reatimeResponse = client.SendAsync();
 
 
-                Console.WriteLine("Recorded Response: " + virtualResponse.Result);
-                Console.WriteLine("Real-time Response: " + reatimeResponse.Result);
+                Console.WriteLine("\n\rRecorded Response: " + virtualResponse.Result);
+                Console.WriteLine("\n\rReal-time Response: " + reatimeResponse.Result);
 
                 var compare = string.Compare(reatimeResponse.Result, virtualResponse.Result, true);
 
+                Console.ForegroundColor = ConsoleColor.Blue;
                 Console.WriteLine("Result: " + (compare == 0 ? "Both result are equal" : "Found some differences"));
+                Console.ResetColor();
             }
-            
+
             Console.ReadKey();
         }
     }
